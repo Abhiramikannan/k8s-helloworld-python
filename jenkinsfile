@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('git clone') {
+            steps {
+                git branch:'master',url:'https://github.com/Abhiramikannan/k8s-helloworld-python.git'
+            }
+        }
+       
+        stage("password"){
+            steps{
+                withCredentials([usernamePassword(credentialsId: '2',
+                passwordVariable: 'password',
+                usernameVariable: 'username')]) {
+                sh '''
+                echo $password |docker login -u $username --password-stdin
+                docker build -t abhiramikannan/python-image .
+                docker push abhiramikannan/python-image
+                '''
+}
+            }
+        }
+        
+        stage("deployment and service"){
+            steps{
+                sh'''
+                kubectl apply -f py-deploy.yaml
+                kubectl apply -f python-service.yaml
+                '''
+                
+            }
+        }
+        
+        
+    }
+}
